@@ -1,0 +1,38 @@
+﻿node.exe : npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm 
+help npmrc` for supported config options.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...config options.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+> mepa-ledger@0.0.1 test
+> vitest run
+
+
+ RUN  v2.1.9 D:/Msc Computer Science/Second Sem/Advanced Software Engineering/examsSoftware/client
+
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Unhandled Errors ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Unhandled Error ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+Error: [vitest-worker]: Timeout calling "fetch" with "["/@vite/env","ssr"]"
+ Γ¥» Object.onTimeoutError ../../../../../Msc%20Computer%20Science/Second%20Sem/Advanced%20Software%20Engineering/exams
+Software/node_modules/vitest/dist/chunks/rpc.C3q9uwRX.js:69:17
+ Γ¥» Timeout._onTimeout ../../../../../Msc%20Computer%20Science/Second%20Sem/Advanced%20Software%20Engineering/examsSof
+tware/node_modules/vitest/dist/chunks/index.68735LiX.js:55:41
+ Γ¥» listOnTimeout ../node:internal/timers:605:17
+ Γ¥» process.processTimers ../node:internal/timers:541:7
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ Test Files  no tests
+      Tests  no tests
+     Errors  1 error
+   Start at  19:28:44
+   Duration  125.50s (transform 432ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 0ms)
+

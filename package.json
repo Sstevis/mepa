@@ -1,0 +1,44 @@
+{
+  "name": "mepa-ledger",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "format": "prettier --write \"client/src/**/*.{ts,tsx}\" \"shared/**/*.ts\""
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.1.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "dexie": "^4.4.4",
+    "framer-motion": "^13.1.0",
+    "lucide-react": "^1.31.0",
+    "papaparse": "^5.5.4",
+    "qrcode.react": "^4.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.5.2",
+    "wouter": "^3.3.5"
+  },
+  "devDependencies": {
+    "@types/papaparse": "^5.5.2",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "fake-indexeddb": "^6.2.5",
+    "postcss": "^8.4.41",
+    "prettier": "^3.3.3",
+    "tailwindcss": "^3.4.10",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2",
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^2.0.5"
+  }
+}

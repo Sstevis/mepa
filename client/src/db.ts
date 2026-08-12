@@ -1,0 +1,92 @@
+import Dexie, { type Table } from "dexie";
+import type { Contact, Obligation, Payment } from "@/types";
+import {
+  computePaymentOutcome,
+  validateObligationAmount,
+  validatePaymentAgainstObligation,
+} from "@/validation";
+
+export class MepaDatabase extends Dexie {
+  contacts!: Table<Contact, string>;
+  obligations!: Table<Obligation, string>;
+  payments!: Table<Payment, string>;
+
+  constructor() {
+    super("MepaLedger");
+    this.version(1).stores({
+      contacts: "id, name, phone, type, createdAt",
+      obligations: "id, contactId, direction, status, date, dueDate, createdAt",
+      payments: "id, obligationId, date, createdAt",
+    });
+  }
+}
+
+export const db = new MepaDatabase();
+
+export async function addContact(
+  data: Omit<Contact, "id" | "createdAt">,
+): Promise<Contact> {
+  const contact: Contact = {
+    ...data,
+    id: crypto.randomUUID(),
+    createdAt: Date.now(),
+  };
+  await db.contacts.add(contact);
+  return contact;
+}
+
+export async function addObligation(
+  data: Omit<Obligation, "id" | "createdAt" | "status" | "remainingAmount">,
+): Promise<Obligation> {
+  validateObligationAmount(data.amount);
+
+  const obligation: Obligation = {
+    ...data,
+    id: crypto.randomUUID(),
+    status: "open",
+    remainingAmount: data.amount,
+    createdAt: Date.now(),
+  };
+  await db.obligations.add(obligation);
+  return obligation;
+}
+
+export async function recordPayment(
+  data: Omit<Payment, "id" | "createdAt">,
+): Promise<Payment> {
+  return db.transaction("rw", db.obligations, db.payments, async () => {
+    const obligation = await db.obligations.get(data.obligationId);
+    validatePaymentAgainstObligation(obligation, data.amount);
+
+    const payment: Payment = {
+      ...data,
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+    };
+
+    const { remainingAmount, status } = computePaymentOutcome(
+      obligation,
+      payment.amount,
+    );
+
+    await db.payments.add(payment);
+    await db.obligations.update(obligation.id, {
+      remainingAmount,
+      status,
+    });
+
+    return payment;
+  });
+}
+
+export async function getPaymentsForObligation(
+  obligationId: string,
+): Promise<Payment[]> {
+  return db.payments.where("obligationId").equals(obligationId).toArray();
+}
+
+export async function getObligationsForContact(
+  contactId: string,
+): Promise<Obligation[]> {
+  return db.obligations.where("contactId").equals(contactId).toArray();
+}
