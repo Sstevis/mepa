@@ -1,5 +1,6 @@
 import { LogOut } from "lucide-react";
 
+import WorkspaceInvitations from "@/components/WorkspaceInvitations";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -84,6 +85,8 @@ export default function WorkspaceHome() {
           No contacts, obligations, or payments yet. This workspace is empty
           until ledger migration arrives in a later stage.
         </div>
+
+        <WorkspaceInvitations />
 
         <div className="rounded-xl border border-teal-100 bg-teal-50/80 p-4 text-sm text-teal-950">
           Local browser ledger data from the prototype stays unlinked. Server

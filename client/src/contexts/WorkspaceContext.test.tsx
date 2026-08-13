@@ -16,6 +16,21 @@ vi.mock("@/contexts/AuthContext", () => ({
   })),
 }));
 
+vi.mock("@/hooks/useWorkspaceInvitations", () => ({
+  useWorkspaceInvitations: vi.fn(() => ({
+    invitations: [],
+    loading: false,
+    creating: false,
+    revokingInvitationId: null,
+    error: null,
+    successMessage: null,
+    refresh: vi.fn(),
+    createInvitation: vi.fn(),
+    revokeInvitation: vi.fn(),
+    clearMessages: vi.fn(),
+  })),
+}));
+
 const membershipA: ActiveWorkspaceMembership = {
   workspaceId: "ws-a",
   workspaceName: "Alpha Traders",
