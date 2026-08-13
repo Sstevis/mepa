@@ -13,6 +13,9 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["../client/src/**/*.test.{ts,tsx}"],
+    include: [
+      "../client/src/**/*.test.{ts,tsx}",
+      "../supabase/functions/**/*.test.{ts,tsx}",
+    ],
   },
 });
