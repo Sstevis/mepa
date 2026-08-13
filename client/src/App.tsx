@@ -1,39 +1,33 @@
-import { useEffect } from "react";
 import { Route, Switch } from "wouter";
 
-import AddMenu from "@/components/AddMenu";
-import ContactDetail from "@/components/ContactDetail";
-import ContactForm from "@/components/ContactForm";
-import ContactList from "@/components/ContactList";
-import Dashboard from "@/components/Dashboard";
-import ExportButton from "@/components/ExportButton";
-import ObligationForm from "@/components/ObligationForm";
-import PaymentForm from "@/components/PaymentForm";
+import AuthCallback from "@/components/AuthCallback";
+import AuthPage from "@/components/AuthPage";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import ReceiptViewer from "@/components/ReceiptViewer";
-import { db } from "@/db";
-import { seedDatabase } from "@/seed";
+import WorkspacePending from "@/components/WorkspacePending";
+
+function ProtectedWorkspaceBoundary() {
+  return (
+    <ProtectedRoute>
+      <WorkspacePending />
+    </ProtectedRoute>
+  );
+}
 
 export default function App() {
-  useEffect(() => {
-    void (async () => {
-      const count = await db.contacts.count();
-      if (count === 0) {
-        await seedDatabase();
-      }
-    })();
-  }, []);
-
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/contacts" component={ContactList} />
-      <Route path="/contacts/new" component={ContactForm} />
-      <Route path="/contacts/:id" component={ContactDetail} />
-      <Route path="/add" component={AddMenu} />
-      <Route path="/obligations/new" component={ObligationForm} />
-      <Route path="/obligations/:id/pay" component={PaymentForm} />
-      <Route path="/export" component={ExportButton} />
+      <Route path="/auth/callback" component={AuthCallback} />
+      <Route path="/auth" component={AuthPage} />
       <Route path="/verify" component={ReceiptViewer} />
+      <Route path="/" component={ProtectedWorkspaceBoundary} />
+      <Route path="/contacts" component={ProtectedWorkspaceBoundary} />
+      <Route path="/contacts/new" component={ProtectedWorkspaceBoundary} />
+      <Route path="/contacts/:id" component={ProtectedWorkspaceBoundary} />
+      <Route path="/add" component={ProtectedWorkspaceBoundary} />
+      <Route path="/obligations/new" component={ProtectedWorkspaceBoundary} />
+      <Route path="/obligations/:id/pay" component={ProtectedWorkspaceBoundary} />
+      <Route path="/export" component={ProtectedWorkspaceBoundary} />
     </Switch>
   );
 }
