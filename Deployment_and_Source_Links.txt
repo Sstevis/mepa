@@ -1,10 +1,16 @@
 Student Name:
 Student ID:
 Project Title: Mepa Ledger
-Live Application:
+Live Application: https://mepa-wheat.vercel.app/
 Admin URL: Not applicable — no authentication in this prototype
 Test Username: Not applicable
 Test Password: Not applicable
 Admin Username: Not applicable
 Admin Password: Not applicable
-Source Code Repository:
+Source Code Repository: https://github.com/Sstevis/mepa
+Build Command: npm run build
+Output Directory: dist
+Hosting Platform: Vercel
+Authentication: Not applicable in this prototype
+Test Credentials: Not applicable
+Data Limitation: Browser-local IndexedDB; no shared server database
