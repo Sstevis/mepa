@@ -1,5 +1,13 @@
 # Mepa Ledger — Technical Debt
 
+## Contact deletion (cascade, client-side only)
+
+- **Debt:** Deleting a contact permanently removes its obligations and payments from local IndexedDB with no undo and no server reconciliation.
+- **Cause:** MVP stores all ledger data client-side; cascade deletion keeps Dexie records consistent in one transaction.
+- **Impact:** Accidental deletion after confirmation is irreversible on that device unless the user has a CSV export.
+- **Priority:** Medium for production; acceptable for prototype with explicit confirmation dialog.
+- **Proposed Resolution:** Soft-delete with archive/restore, server-backed sync, and role-based delete permissions.
+
 ## Client-side IndexedDB storage (single device)
 
 - **Debt:** All contacts, obligations, and payments live in browser IndexedDB via Dexie with no server sync or multi-device replication.

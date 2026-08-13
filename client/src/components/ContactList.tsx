@@ -1,10 +1,12 @@
-import { Link } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import Layout from "@/components/Layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CONTACTS_GRID_CLASSES } from "@/contactListLayout";
 import { useContacts, useObligations } from "@/hooks/useDbData";
 import { calculateContactBalance } from "@/utils/calculateBalances";
 import { formatCurrency } from "@/utils/formatCurrency";
@@ -38,10 +40,28 @@ function avatarColor(name: string): string {
 export default function ContactList() {
   const { contacts } = useContacts();
   const { obligations } = useObligations();
+  const search = useSearch();
+  const [, navigate] = useLocation();
+  const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const deletedName = params.get("deleted");
+    if (!deletedName) return;
+
+    setSuccessMessage(`${deletedName} was deleted.`);
+    navigate("/contacts", { replace: true });
+  }, [search, navigate]);
 
   return (
     <Layout title="Contacts">
-      <div className="mb-4 flex items-center justify-between">
+      {successMessage && (
+        <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          {successMessage}
+        </div>
+      )}
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
           Suppliers and customers
         </p>
@@ -64,7 +84,7 @@ export default function ContactList() {
         </div>
       ) : (
         <motion.ul
-          className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+          className={CONTACTS_GRID_CLASSES}
           variants={listVariants}
           initial="hidden"
           animate="show"
@@ -76,10 +96,14 @@ export default function ContactList() {
             );
 
             return (
-              <motion.li key={contact.id} variants={itemVariants}>
-                <Link href={`/contacts/${contact.id}`}>
-                  <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:transition-shadow md:hover:shadow-md">
-                    <div className="flex items-start gap-3">
+              <motion.li
+                key={contact.id}
+                variants={itemVariants}
+                className="min-w-0"
+              >
+                <Link href={`/contacts/${contact.id}`} className="block min-w-0">
+                  <div className="h-full overflow-hidden rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:transition-shadow md:hover:shadow-md">
+                    <div className="flex min-w-0 items-start gap-3">
                       <div
                         className={cn(
                           "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
@@ -89,16 +113,17 @@ export default function ContactList() {
                         {contact.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className="text-base font-bold tracking-tight">
+                        <div className="flex min-w-0 items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-base font-bold tracking-tight">
                               {contact.name}
                             </p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="truncate text-sm text-muted-foreground">
                               {contact.phone}
                             </p>
                           </div>
                           <Badge
+                            className="shrink-0"
                             variant={
                               contact.type === "customer" ? "success" : "danger"
                             }
@@ -108,12 +133,12 @@ export default function ContactList() {
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2 text-sm tabular-nums">
                           {balance.theyOweMe > 0 && (
-                            <span className="text-emerald-700">
+                            <span className="break-words text-emerald-700">
                               Owes you {formatCurrency(balance.theyOweMe)}
                             </span>
                           )}
                           {balance.iOweThem > 0 && (
-                            <span className="text-red-700">
+                            <span className="break-words text-red-700">
                               You owe {formatCurrency(balance.iOweThem)}
                             </span>
                           )}

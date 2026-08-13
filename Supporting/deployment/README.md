@@ -4,6 +4,21 @@
 
 **Mepa Ledger** — offline-first business ledger for Ghanaian market traders (client-side PWA).
 
+## Deployed instance
+
+| Field | Value |
+|-------|-------|
+| **Live application** | https://mepa-wheat.vercel.app/ |
+| **Source repository** | https://github.com/Sstevis/mepa |
+| **Hosting platform** | Vercel |
+| **Build command** | `npm run build` |
+| **Output directory** | `dist` |
+| **Authentication** | Not applicable in this prototype |
+| **Test credentials** | Not applicable |
+| **Data storage** | Browser-local IndexedDB; no shared server database |
+
+SPA routing on Vercel is handled by root [`vercel.json`](../../vercel.json). Netlify-style fallback remains in `client/public/_redirects`.
+
 ## Build architecture
 
 | Layer | Technology |
@@ -68,7 +83,7 @@ dist/
 
 - **Static file hosting** only (Netlify, Vercel static, GitHub Pages, Cloudflare Pages, Azure Static Web Apps, S3 + CloudFront, etc.)
 - **HTTPS** recommended (required for PWA install and service worker on most browsers)
-- **SPA fallback required:** all unknown paths must serve `index.html` so Wouter can handle client routes. This repo includes `client/public/_redirects` for Netlify. Other hosts need equivalent config (e.g. Vercel `vercel.json` rewrites, Apache `FallbackResource`, nginx `try_files`)
+- **SPA fallback required:** all unknown paths must serve `index.html` so Wouter can handle client routes. This repo includes `vercel.json` for Vercel and `client/public/_redirects` for Netlify.
 - **No server-side API** — the app does not call a backend in this prototype
 - **Browser support:** modern Chromium-based Android browsers and current desktop Chrome/Edge/Firefox
 
@@ -104,4 +119,4 @@ Run after deploying `dist/` (or after `npm run preview` locally):
 ## Related documentation
 
 - [`Supporting/technical-debt.md`](../technical-debt.md) — known limitations (no auth, unverified receipts, single-device storage)
-- [`Deployment_and_Source_Links.txt`](../../Deployment_and_Source_Links.txt) — submission placeholders for live URL and repository
+- [`Deployment_and_Source_Links.txt`](../../Deployment_and_Source_Links.txt) — submission links and deployment metadata

@@ -90,3 +90,58 @@ export async function getObligationsForContact(
 ): Promise<Obligation[]> {
   return db.obligations.where("contactId").equals(contactId).toArray();
 }
+
+export interface ContactDeletionSummary {
+  obligationCount: number;
+  paymentCount: number;
+}
+
+/**
+ * Deletion policy: cascade-delete all obligations and payments for the contact
+ * inside a single IndexedDB transaction. If the transaction fails, no records
+ * are removed.
+ */
+export async function getContactDeletionSummary(
+  contactId: string,
+): Promise<ContactDeletionSummary> {
+  const obligations = await db.obligations
+    .where("contactId")
+    .equals(contactId)
+    .toArray();
+  const obligationIds = obligations.map((obligation) => obligation.id);
+
+  const paymentCount =
+    obligationIds.length === 0
+      ? 0
+      : await db.payments
+          .where("obligationId")
+          .anyOf(obligationIds)
+          .count();
+
+  return {
+    obligationCount: obligations.length,
+    paymentCount,
+  };
+}
+
+export async function deleteContact(contactId: string): Promise<void> {
+  await db.transaction("rw", db.contacts, db.obligations, db.payments, async () => {
+    const contact = await db.contacts.get(contactId);
+    if (!contact) {
+      throw new Error("Cannot delete contact: contact not found.");
+    }
+
+    const obligations = await db.obligations
+      .where("contactId")
+      .equals(contactId)
+      .toArray();
+    const obligationIds = obligations.map((obligation) => obligation.id);
+
+    if (obligationIds.length > 0) {
+      await db.payments.where("obligationId").anyOf(obligationIds).delete();
+      await db.obligations.where("contactId").equals(contactId).delete();
+    }
+
+    await db.contacts.delete(contactId);
+  });
+}

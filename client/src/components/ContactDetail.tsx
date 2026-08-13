@@ -3,10 +3,11 @@ import { Link, useLocation, useRoute } from "wouter";
 import { QRCodeSVG } from "qrcode.react";
 import { Share2 } from "lucide-react";
 
+import { DeleteContactDialog } from "@/components/DeleteContactDialog";
 import Layout from "@/components/Layout";
 import ObligationCard from "@/components/ObligationCard";
 import { Button } from "@/components/ui/button";
-import { db, getPaymentsForObligation } from "@/db";
+import { db, deleteContact, getPaymentsForObligation } from "@/db";
 import { useContact } from "@/hooks/useDbData";
 import { calculateContactBalance } from "@/utils/calculateBalances";
 import { formatCurrency } from "@/utils/formatCurrency";
@@ -46,7 +47,7 @@ function PaymentHistory({ payments }: { payments: Payment[] }) {
 export default function ContactDetail() {
   const [, params] = useRoute("/contacts/:id");
   const contactId = params?.id;
-  const contact = useContact(contactId);
+  const { contact, loading } = useContact(contactId);
   const [, navigate] = useLocation();
   const [obligations, setObligations] = useState<Obligation[]>([]);
   const [shareObligation, setShareObligation] = useState<Obligation | null>(
@@ -56,6 +57,9 @@ export default function ContactDetail() {
   const [paymentsByObligation, setPaymentsByObligation] = useState<
     Record<string, Payment[]>
   >({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     if (!contactId) return;
@@ -84,6 +88,14 @@ export default function ContactDetail() {
     });
   }, [obligations]);
 
+  if (loading) {
+    return (
+      <Layout title="Contact">
+        <p className="text-muted-foreground">Loading contact...</p>
+      </Layout>
+    );
+  }
+
   if (!contact) {
     return (
       <Layout title="Contact">
@@ -96,6 +108,7 @@ export default function ContactDetail() {
 
   async function handleShare(obligation: Obligation) {
     if (!contact) return;
+
     const payments = await getPaymentsForObligation(obligation.id);
     const payload: ReceiptPayload = {
       obligation,
@@ -120,24 +133,49 @@ export default function ContactDetail() {
     }
   }
 
+  async function handleConfirmDelete() {
+    if (!contactId || !contact) return;
+
+    setDeleting(true);
+    setDeleteError("");
+
+    try {
+      await deleteContact(contactId);
+      setDeleteDialogOpen(false);
+      navigate(
+        `/contacts?deleted=${encodeURIComponent(contact.name)}`,
+      );
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete contact. Please try again.",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <Layout title={contact.name} onBack={() => navigate("/contacts")}>
       <div className="space-y-4">
         <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:transition-shadow md:hover:shadow-md">
-          <p className="text-sm text-muted-foreground">{contact.phone}</p>
+          <p className="truncate text-sm text-muted-foreground">
+            {contact.phone}
+          </p>
           <p className="mt-1 capitalize text-sm">{contact.type}</p>
-          <div className="mt-3 grid grid-cols-2 gap-2 text-sm tabular-nums">
-            <div className="rounded-xl bg-emerald-50/90 p-2 font-mono text-emerald-800">
+          <div className="mt-3 grid grid-cols-1 gap-2 text-sm tabular-nums sm:grid-cols-2">
+            <div className="break-words rounded-xl bg-emerald-50/90 p-2 font-mono text-emerald-800">
               Owes you: {formatCurrency(balance.theyOweMe)}
             </div>
-            <div className="rounded-xl bg-red-50/90 p-2 font-mono text-red-800">
+            <div className="break-words rounded-xl bg-red-50/90 p-2 font-mono text-red-800">
               You owe: {formatCurrency(balance.iOweThem)}
             </div>
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <Link href={`/obligations/new?contactId=${contact.id}`} className="flex-1">
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/obligations/new?contactId=${contact.id}`} className="min-w-0 flex-1">
             <Button className="min-h-[44px] w-full bg-teal-700 hover:bg-teal-800">
               New Obligation
             </Button>
@@ -163,11 +201,11 @@ export default function ContactDetail() {
                       payments={paymentsByObligation[obligation.id] ?? []}
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {obligation.status !== "settled" && (
                       <Button
                         variant="outline"
-                        className="min-h-[44px] flex-1"
+                        className="min-h-[44px] min-w-0 flex-1"
                         onClick={() =>
                           navigate(`/obligations/${obligation.id}/pay`)
                         }
@@ -177,7 +215,7 @@ export default function ContactDetail() {
                     )}
                     <Button
                       variant="outline"
-                      className="min-h-[44px] flex-1"
+                      className="min-h-[44px] min-w-0 flex-1"
                       onClick={() => void handleShare(obligation)}
                     >
                       <Share2 className="mr-1 h-4 w-4" />
@@ -198,7 +236,35 @@ export default function ContactDetail() {
             </div>
           </div>
         )}
+
+        <section className="border-t border-gray-100 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-[44px] w-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+            onClick={() => {
+              setDeleteError("");
+              setDeleteDialogOpen(true);
+            }}
+          >
+            Delete Contact
+          </Button>
+        </section>
       </div>
+
+      <DeleteContactDialog
+        open={deleteDialogOpen}
+        contactId={contact.id}
+        contactName={contact.name}
+        deleting={deleting}
+        error={deleteError}
+        onCancel={() => {
+          if (deleting) return;
+          setDeleteDialogOpen(false);
+          setDeleteError("");
+        }}
+        onConfirm={() => void handleConfirmDelete()}
+      />
     </Layout>
   );
 }

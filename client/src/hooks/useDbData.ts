@@ -54,12 +54,20 @@ export function usePayments() {
 }
 
 export function useContact(id: string | undefined) {
-  const [contact, setContact] = useState<Contact | null>(null);
+  const [contact, setContact] = useState<Contact | null | undefined>(undefined);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setContact(null);
+      return;
+    }
+
+    setContact(undefined);
     void db.contacts.get(id).then((c) => setContact(c ?? null));
   }, [id]);
 
-  return contact;
+  return {
+    contact: contact ?? null,
+    loading: contact === undefined && Boolean(id),
+  };
 }
