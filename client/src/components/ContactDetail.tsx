@@ -11,6 +11,7 @@ import { db, deleteContact, getPaymentsForObligation } from "@/db";
 import { useContact } from "@/hooks/useDbData";
 import { calculateContactBalance } from "@/utils/calculateBalances";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { formatGhanaPhoneForDisplay } from "@/utils/ghanaPhone";
 import type { Obligation, Payment, ReceiptPayload } from "@/types";
 
 function formatMethod(method: Payment["method"]): string {
@@ -161,7 +162,7 @@ export default function ContactDetail() {
       <div className="space-y-4">
         <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:transition-shadow md:hover:shadow-md">
           <p className="truncate text-sm text-muted-foreground">
-            {contact.phone}
+            {formatGhanaPhoneForDisplay(contact.phone)}
           </p>
           <p className="mt-1 capitalize text-sm">{contact.type}</p>
           <div className="mt-3 grid grid-cols-1 gap-2 text-sm tabular-nums sm:grid-cols-2">

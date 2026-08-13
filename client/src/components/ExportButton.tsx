@@ -3,6 +3,7 @@ import Papa from "papaparse";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { useContacts, useObligations, usePayments } from "@/hooks/useDbData";
+import { formatGhanaPhoneForDisplay } from "@/utils/ghanaPhone";
 
 export default function ExportButton() {
   const { contacts } = useContacts();
@@ -12,18 +13,24 @@ export default function ExportButton() {
   async function handleExport() {
     const contactMap = Object.fromEntries(contacts.map((c) => [c.id, c]));
 
-    const obligationRows = obligations.map((o) => ({
-      type: "obligation",
-      contactName: contactMap[o.contactId]?.name ?? "",
-      contactPhone: contactMap[o.contactId]?.phone ?? "",
-      direction: o.direction,
-      description: o.description,
-      amount: o.amount,
-      remainingAmount: o.remainingAmount,
-      status: o.status,
-      date: o.date,
-      dueDate: o.dueDate,
-    }));
+    const obligationRows = obligations.map((o) => {
+      const contact = contactMap[o.contactId];
+      const rawPhone = contact?.phone ?? "";
+      return {
+        type: "obligation",
+        contactName: contact?.name ?? "",
+        contactPhone: rawPhone
+          ? formatGhanaPhoneForDisplay(rawPhone)
+          : "",
+        direction: o.direction,
+        description: o.description,
+        amount: o.amount,
+        remainingAmount: o.remainingAmount,
+        status: o.status,
+        date: o.date,
+        dueDate: o.dueDate,
+      };
+    });
 
     const paymentRows = payments.map((p) => {
       const obligation = obligations.find((o) => o.id === p.obligationId);

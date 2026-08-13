@@ -10,6 +10,7 @@ import { CONTACTS_GRID_CLASSES } from "@/contactListLayout";
 import { useContacts, useObligations } from "@/hooks/useDbData";
 import { calculateContactBalance } from "@/utils/calculateBalances";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { formatGhanaPhoneForDisplay } from "@/utils/ghanaPhone";
 import { cn } from "@/lib/utils";
 
 const avatarColors = [
@@ -119,7 +120,7 @@ export default function ContactList() {
                               {contact.name}
                             </p>
                             <p className="truncate text-sm text-muted-foreground">
-                              {contact.phone}
+                              {formatGhanaPhoneForDisplay(contact.phone)}
                             </p>
                           </div>
                           <Badge

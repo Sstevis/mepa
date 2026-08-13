@@ -5,6 +5,7 @@ import Layout from "@/components/Layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { formatGhanaPhoneForDisplay } from "@/utils/ghanaPhone";
 import type { ReceiptPayload } from "@/types";
 
 function decodeReceipt(data: string): ReceiptPayload | null {
@@ -42,7 +43,7 @@ export default function ReceiptViewer() {
         <div>
           <p className="text-sm text-muted-foreground">Mepa Ledger Receipt</p>
           <h2 className="text-xl font-semibold">{contact.name}</h2>
-          <p className="text-sm">{contact.phone}</p>
+          <p className="text-sm">{formatGhanaPhoneForDisplay(contact.phone)}</p>
         </div>
 
         <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">

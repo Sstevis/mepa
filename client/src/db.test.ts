@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { addObligation, db, recordPayment } from "@/db";
+import { addContact, addObligation, db, recordPayment } from "@/db";
 import { DomainValidationError } from "@/validation";
 
 describe("db domain validation", () => {
@@ -230,5 +230,33 @@ describe("db domain validation", () => {
     updated = await db.obligations.get(obligation.id);
     expect(updated?.remainingAmount).toBe(0);
     expect(updated?.status).toBe("settled");
+  });
+
+  it("normalizes valid Ghana phone numbers on contact write", async () => {
+    const contact = await addContact({
+      name: "Akosua",
+      phone: "024 412 3456",
+      type: "customer",
+    });
+
+    expect(contact.phone).toBe("+233244123456");
+  });
+
+  it("rejects invalid Ghana phone numbers on contact write", async () => {
+    await expect(
+      addContact({
+        name: "Invalid",
+        phone: "024412345",
+        type: "supplier",
+      }),
+    ).rejects.toThrow(DomainValidationError);
+
+    await expect(
+      addContact({
+        name: "Invalid",
+        phone: "024ABC3456",
+        type: "supplier",
+      }),
+    ).rejects.toThrow(DomainValidationError);
   });
 });

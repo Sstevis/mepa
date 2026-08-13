@@ -4,7 +4,12 @@ import {
   computePaymentOutcome,
   validateObligationAmount,
   validatePaymentAgainstObligation,
+  DomainValidationError,
 } from "@/validation";
+import {
+  PhoneValidationError,
+  validateAndNormalizeGhanaPhone,
+} from "@/utils/ghanaPhone";
 
 export class MepaDatabase extends Dexie {
   contacts!: Table<Contact, string>;
@@ -26,8 +31,19 @@ export const db = new MepaDatabase();
 export async function addContact(
   data: Omit<Contact, "id" | "createdAt">,
 ): Promise<Contact> {
+  let phone: string;
+  try {
+    phone = validateAndNormalizeGhanaPhone(data.phone);
+  } catch (error) {
+    if (error instanceof PhoneValidationError) {
+      throw new DomainValidationError(error.message);
+    }
+    throw error;
+  }
+
   const contact: Contact = {
     ...data,
+    phone,
     id: crypto.randomUUID(),
     createdAt: Date.now(),
   };

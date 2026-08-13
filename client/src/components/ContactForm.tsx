@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addContact } from "@/db";
 import type { ContactType } from "@/types";
+import { DomainValidationError } from "@/validation";
 
 export default function ContactForm() {
   const [, navigate] = useLocation();
@@ -14,16 +15,34 @@ export default function ContactForm() {
   const [phone, setPhone] = useState("");
   const [type, setType] = useState<ContactType>("supplier");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
+
     if (!name.trim() || !phone.trim()) {
       setError("Name and phone are required.");
       return;
     }
 
-    await addContact({ name: name.trim(), phone: phone.trim(), type });
-    navigate("/contacts");
+    setError("");
+    setSubmitting(true);
+
+    try {
+      await addContact({ name: name.trim(), phone: phone.trim(), type });
+      navigate("/contacts");
+    } catch (err) {
+      if (err instanceof DomainValidationError) {
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to save contact. Please try again.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -36,6 +55,7 @@ export default function ContactForm() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Kwame Mensah"
+            disabled={submitting}
           />
         </div>
 
@@ -47,6 +67,7 @@ export default function ContactForm() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="024 123 4567"
+            disabled={submitting}
           />
         </div>
 
@@ -57,6 +78,7 @@ export default function ContactForm() {
             value={type}
             onChange={(e) => setType(e.target.value as ContactType)}
             className="flex h-11 w-full rounded-md border border-input bg-background px-3 text-base"
+            disabled={submitting}
           >
             <option value="supplier">Supplier</option>
             <option value="customer">Customer</option>
@@ -68,8 +90,9 @@ export default function ContactForm() {
         <Button
           type="submit"
           className="min-h-[44px] w-full bg-teal-700 hover:bg-teal-800"
+          disabled={submitting}
         >
-          Save Contact
+          {submitting ? "Saving..." : "Save Contact"}
         </Button>
       </form>
     </Layout>
