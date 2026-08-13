@@ -4,12 +4,12 @@ import AuthCallback from "@/components/AuthCallback";
 import AuthPage from "@/components/AuthPage";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ReceiptViewer from "@/components/ReceiptViewer";
-import WorkspacePending from "@/components/WorkspacePending";
+import WorkspaceApp from "@/components/WorkspaceApp";
 
 function ProtectedWorkspaceBoundary() {
   return (
     <ProtectedRoute>
-      <WorkspacePending />
+      <WorkspaceApp />
     </ProtectedRoute>
   );
 }
