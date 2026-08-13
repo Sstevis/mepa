@@ -9,7 +9,6 @@ import type { ActiveWorkspaceMembership, WorkspaceType } from "@/types/workspace
 
 interface UseWorkspaceMembershipsResult {
   memberships: ActiveWorkspaceMembership[];
-  activeMembership: ActiveWorkspaceMembership | null;
   loading: boolean;
   creating: boolean;
   error: string | null;
@@ -64,11 +63,8 @@ export function useWorkspaceMemberships(): UseWorkspaceMembershipsResult {
     [refresh, supabase],
   );
 
-  const activeMembership = memberships[0] ?? null;
-
   return {
     memberships,
-    activeMembership,
     loading,
     creating,
     error,

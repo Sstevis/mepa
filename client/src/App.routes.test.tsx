@@ -50,7 +50,6 @@ function mockAuthState(
 function mockNoWorkspace() {
   vi.mocked(useWorkspaceMemberships).mockReturnValue({
     memberships: [],
-    activeMembership: null,
     loading: false,
     creating: false,
     error: null,

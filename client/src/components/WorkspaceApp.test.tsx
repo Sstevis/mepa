@@ -50,7 +50,6 @@ describe("WorkspaceApp", () => {
   it("shows onboarding when there is no active membership", () => {
     vi.mocked(useWorkspaceMemberships).mockReturnValue({
       memberships: [],
-      activeMembership: null,
       loading: false,
       creating: false,
       error: null,
@@ -69,7 +68,6 @@ describe("WorkspaceApp", () => {
   it("shows the workspace summary after RLS-protected membership load", () => {
     vi.mocked(useWorkspaceMemberships).mockReturnValue({
       memberships: [sampleMembership],
-      activeMembership: sampleMembership,
       loading: false,
       creating: false,
       error: null,

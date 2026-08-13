@@ -58,6 +58,6 @@ describe("useWorkspaceMemberships", () => {
 
     expect(mockCreateRpc).toHaveBeenCalledWith({}, "Kwame Provisions", "individual");
     expect(mockFetch).toHaveBeenCalledTimes(2);
-    expect(result.current.activeMembership?.workspaceName).toBe("Kwame Provisions");
+    expect(result.current.memberships[0]?.workspaceName).toBe("Kwame Provisions");
   });
 });
