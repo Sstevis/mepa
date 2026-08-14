@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addContact } from "@/db";
+import { useLedger } from "@/contexts/LedgerContext";
 import type { ContactType } from "@/types";
 import { DomainValidationError } from "@/validation";
 
 export default function ContactForm() {
+  const { db } = useLedger();
   const [, navigate] = useLocation();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -30,7 +32,7 @@ export default function ContactForm() {
     setSubmitting(true);
 
     try {
-      await addContact({ name: name.trim(), phone: phone.trim(), type });
+      await addContact(db, { name: name.trim(), phone: phone.trim(), type });
       navigate("/contacts");
     } catch (err) {
       if (err instanceof DomainValidationError) {

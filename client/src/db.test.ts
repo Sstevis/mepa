@@ -1,18 +1,32 @@
 import "fake-indexeddb/auto";
-import { beforeEach, describe, expect, it } from "vitest";
+import Dexie from "dexie";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { addContact, addObligation, db, recordPayment } from "@/db";
+import {
+  addContact,
+  addObligation,
+  MepaDatabase,
+  recordPayment,
+} from "@/db";
 import { DomainValidationError } from "@/validation";
 
 describe("db domain validation", () => {
+  let db: MepaDatabase;
+  let databaseName: string;
+
   beforeEach(async () => {
-    await db.payments.clear();
-    await db.obligations.clear();
-    await db.contacts.clear();
+    databaseName = `test-db-${crypto.randomUUID()}`;
+    db = new MepaDatabase(databaseName);
+    await db.open();
+  });
+
+  afterEach(async () => {
+    await db.close();
+    await Dexie.delete(databaseName);
   });
 
   it("records a valid partial payment and updates obligation state", async () => {
-    const obligation = await addObligation({
+    const obligation = await addObligation(db, {
       contactId: "seed-contact-kofi",
       direction: "i_owe_them",
       amount: 2500,
@@ -21,7 +35,7 @@ describe("db domain validation", () => {
       dueDate: "2026-08-30",
     });
 
-    await recordPayment({
+    await recordPayment(db, {
       obligationId: obligation.id,
       amount: 1000,
       method: "momo",
@@ -36,7 +50,7 @@ describe("db domain validation", () => {
   });
 
   it("records an exact payment that settles an obligation", async () => {
-    const obligation = await addObligation({
+    const obligation = await addObligation(db, {
       contactId: "seed-contact-kofi",
       direction: "i_owe_them",
       amount: 2500,
@@ -45,7 +59,7 @@ describe("db domain validation", () => {
       dueDate: "2026-08-30",
     });
 
-    await recordPayment({
+    await recordPayment(db, {
       obligationId: obligation.id,
       amount: 2500,
       method: "cash",
@@ -61,7 +75,7 @@ describe("db domain validation", () => {
 
   it("rejects negative obligation amounts", async () => {
     await expect(
-      addObligation({
+      addObligation(db, {
         contactId: "contact-1",
         direction: "i_owe_them",
         amount: -100,
@@ -74,7 +88,7 @@ describe("db domain validation", () => {
 
   it("rejects zero obligation amounts", async () => {
     await expect(
-      addObligation({
+      addObligation(db, {
         contactId: "contact-1",
         direction: "i_owe_them",
         amount: 0,
@@ -86,7 +100,7 @@ describe("db domain validation", () => {
   });
 
   it("rejects negative payment amounts", async () => {
-    const obligation = await addObligation({
+    const obligation = await addObligation(db, {
       contactId: "contact-1",
       direction: "i_owe_them",
       amount: 2500,
@@ -96,7 +110,7 @@ describe("db domain validation", () => {
     });
 
     await expect(
-      recordPayment({
+      recordPayment(db, {
         obligationId: obligation.id,
         amount: -100,
         method: "cash",
@@ -108,7 +122,7 @@ describe("db domain validation", () => {
   });
 
   it("rejects zero payment amounts", async () => {
-    const obligation = await addObligation({
+    const obligation = await addObligation(db, {
       contactId: "contact-1",
       direction: "i_owe_them",
       amount: 2500,
@@ -118,7 +132,7 @@ describe("db domain validation", () => {
     });
 
     await expect(
-      recordPayment({
+      recordPayment(db, {
         obligationId: obligation.id,
         amount: 0,
         method: "cash",
@@ -130,7 +144,7 @@ describe("db domain validation", () => {
   });
 
   it("rejects overpayment", async () => {
-    const obligation = await addObligation({
+    const obligation = await addObligation(db, {
       contactId: "contact-1",
       direction: "i_owe_them",
       amount: 2500,
@@ -140,7 +154,7 @@ describe("db domain validation", () => {
     });
 
     await expect(
-      recordPayment({
+      recordPayment(db, {
         obligationId: obligation.id,
         amount: 2600,
         method: "momo",
@@ -153,7 +167,7 @@ describe("db domain validation", () => {
 
   it("rejects payment for a missing obligation", async () => {
     await expect(
-      recordPayment({
+      recordPayment(db, {
         obligationId: "missing-obligation-id",
         amount: 100,
         method: "cash",
@@ -165,7 +179,7 @@ describe("db domain validation", () => {
   });
 
   it("rejects payment against an already-settled obligation", async () => {
-    const obligation = await addObligation({
+    const obligation = await addObligation(db, {
       contactId: "contact-1",
       direction: "i_owe_them",
       amount: 800,
@@ -174,7 +188,7 @@ describe("db domain validation", () => {
       dueDate: "2026-08-20",
     });
 
-    await recordPayment({
+    await recordPayment(db, {
       obligationId: obligation.id,
       amount: 800,
       method: "cash",
@@ -184,7 +198,7 @@ describe("db domain validation", () => {
     });
 
     await expect(
-      recordPayment({
+      recordPayment(db, {
         obligationId: obligation.id,
         amount: 100,
         method: "cash",
@@ -196,7 +210,7 @@ describe("db domain validation", () => {
   });
 
   it("keeps remaining balance and status correct after sequential valid payments", async () => {
-    const obligation = await addObligation({
+    const obligation = await addObligation(db, {
       contactId: "seed-contact-kofi",
       direction: "i_owe_them",
       amount: 2500,
@@ -205,7 +219,7 @@ describe("db domain validation", () => {
       dueDate: "2026-08-30",
     });
 
-    await recordPayment({
+    await recordPayment(db, {
       obligationId: obligation.id,
       amount: 1000,
       method: "momo",
@@ -218,7 +232,7 @@ describe("db domain validation", () => {
     expect(updated?.remainingAmount).toBe(1500);
     expect(updated?.status).toBe("partial");
 
-    await recordPayment({
+    await recordPayment(db, {
       obligationId: obligation.id,
       amount: 1500,
       method: "momo",
@@ -233,7 +247,7 @@ describe("db domain validation", () => {
   });
 
   it("normalizes valid Ghana phone numbers on contact write", async () => {
-    const contact = await addContact({
+    const contact = await addContact(db, {
       name: "Akosua",
       phone: "024 412 3456",
       type: "customer",
@@ -244,7 +258,7 @@ describe("db domain validation", () => {
 
   it("rejects invalid Ghana phone numbers on contact write", async () => {
     await expect(
-      addContact({
+      addContact(db, {
         name: "Invalid",
         phone: "024412345",
         type: "supplier",
@@ -252,7 +266,7 @@ describe("db domain validation", () => {
     ).rejects.toThrow(DomainValidationError);
 
     await expect(
-      addContact({
+      addContact(db, {
         name: "Invalid",
         phone: "024ABC3456",
         type: "supplier",

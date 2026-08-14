@@ -1,14 +1,20 @@
-import { Home, Users, PlusCircle, Download, ArrowLeft } from "lucide-react";
+import { Home, Users, PlusCircle, Download, FileText, Wallet, ArrowLeft, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useLocation } from "wouter";
 
+import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useWorkspaceOptional } from "@/contexts/WorkspaceContext";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/contacts", label: "Contacts", icon: Users },
+  { href: "/obligations/new", label: "Add Obligation", icon: FileText },
+  { href: "/payments/new", label: "Make Payment", icon: Wallet },
   { href: "/add", label: "Add", icon: PlusCircle },
-  { href: "/export", label: "Export", icon: Download },
+  { href: "/export", label: "Export Ledger", icon: Download },
 ];
 
 interface LayoutProps {
@@ -25,6 +31,9 @@ export default function Layout({
   onBack,
 }: LayoutProps) {
   const [location] = useLocation();
+  const { signOut } = useAuth();
+  const workspace = useWorkspaceOptional();
+  const selectedMembership = workspace?.selectedMembership ?? null;
 
   const navLink = (href: string, label: string, Icon: typeof Home) => {
     const active =
@@ -70,32 +79,85 @@ export default function Layout({
               <h2 className="text-xl font-bold tracking-tight text-gray-900">
                 Ledger
               </h2>
+              {selectedMembership && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-sm font-medium text-foreground">
+                    {selectedMembership.workspaceName}
+                  </p>
+                  <WorkspaceSwitcher />
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    Ledger data is stored locally on this device. It is not
+                    server-synchronised.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Team invitations are deferred.
+                  </p>
+                </div>
+              )}
             </div>
             <nav className="flex flex-1 flex-col gap-1">
               {navItems.map(({ href, label, icon: Icon }) => (
                 <div key={href}>{navLink(href, label, Icon)}</div>
               ))}
             </nav>
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  void signOut();
+                }}
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </Button>
+            </div>
           </aside>
         )}
 
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-50 border-b bg-white/80 px-1 py-4 backdrop-blur-md md:px-0">
-            <div className="flex items-center gap-3">
-              {onBack && (
-                <button
-                  type="button"
-                  onClick={onBack}
-                  aria-label="Back to contacts"
-                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-gray-700 transition hover:bg-teal-50 hover:text-teal-800"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </button>
-              )}
-              <h1 className="text-lg font-bold tracking-tight text-gray-900">
-                {title ?? "Mepa Ledger"}
-              </h1>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                {onBack && (
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    aria-label="Back to contacts"
+                    className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-gray-700 transition hover:bg-teal-50 hover:text-teal-800"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
+                )}
+                <div className="min-w-0">
+                  <h1 className="truncate text-lg font-bold tracking-tight text-gray-900">
+                    {title ?? "Mepa Ledger"}
+                  </h1>
+                  {selectedMembership && (
+                    <p className="truncate text-xs text-muted-foreground md:hidden">
+                      {selectedMembership.workspaceName}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 w-10 shrink-0 p-0 md:hidden"
+                aria-label="Sign out"
+                onClick={() => {
+                  void signOut();
+                }}
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
             </div>
+            {selectedMembership && (
+              <p className="mt-2 text-xs text-muted-foreground md:hidden">
+                Local ledger only · Team invitations are deferred.
+              </p>
+            )}
           </header>
 
           <motion.main
@@ -110,7 +172,7 @@ export default function Layout({
 
           {!hideNav && (
             <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur-md md:hidden">
-              <ul className="mx-auto grid max-w-lg grid-cols-4">
+              <ul className="mx-auto grid max-w-lg grid-cols-3">
                 {navItems.map(({ href, label, icon: Icon }) => {
                   const active =
                     href === "/"

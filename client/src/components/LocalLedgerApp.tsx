@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Route, Switch } from "wouter";
 
 import AddMenu from "@/components/AddMenu";
@@ -7,25 +6,15 @@ import ContactForm from "@/components/ContactForm";
 import ContactList from "@/components/ContactList";
 import Dashboard from "@/components/Dashboard";
 import ExportButton from "@/components/ExportButton";
+import MakePaymentPage from "@/components/MakePaymentPage";
 import ObligationForm from "@/components/ObligationForm";
 import PaymentForm from "@/components/PaymentForm";
-import { db } from "@/db";
-import { seedDatabase } from "@/seed";
 
 /**
- * Local IndexedDB prototype preserved for the upcoming workspace migration stage.
- * Not mounted in the authenticated application shell.
+ * Core ledger routes backed by scoped local IndexedDB.
+ * Database selection is provided by LedgerProvider in AuthenticatedLedgerShell.
  */
 export default function LocalLedgerApp() {
-  useEffect(() => {
-    void (async () => {
-      const count = await db.contacts.count();
-      if (count === 0) {
-        await seedDatabase();
-      }
-    })();
-  }, []);
-
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
@@ -34,6 +23,7 @@ export default function LocalLedgerApp() {
       <Route path="/contacts/:id" component={ContactDetail} />
       <Route path="/add" component={AddMenu} />
       <Route path="/obligations/new" component={ObligationForm} />
+      <Route path="/payments/new" component={MakePaymentPage} />
       <Route path="/obligations/:id/pay" component={PaymentForm} />
       <Route path="/export" component={ExportButton} />
     </Switch>

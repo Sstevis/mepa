@@ -4,32 +4,36 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import WorkspaceHome from "@/components/WorkspaceHome";
-import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
+import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
+import { useWorkspace, WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { SELECTED_WORKSPACE_STORAGE_KEY } from "@/lib/workspaceSelection";
 import type { ActiveWorkspaceMembership } from "@/types/workspace";
 
-vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: vi.fn(() => ({
-    user: { email: "trader@example.com" },
-    signOut: vi.fn(),
-  })),
-}));
+function WorkspaceSelectionProbe() {
+  const { selectedMembership } = useWorkspace();
+  if (!selectedMembership) {
+    return null;
+  }
 
-vi.mock("@/hooks/useWorkspaceInvitations", () => ({
-  useWorkspaceInvitations: vi.fn(() => ({
-    invitations: [],
-    loading: false,
-    creating: false,
-    revokingInvitationId: null,
-    error: null,
-    successMessage: null,
-    refresh: vi.fn(),
-    createInvitation: vi.fn(),
-    revokeInvitation: vi.fn(),
-    clearMessages: vi.fn(),
-  })),
-}));
+  const roleLabel =
+    selectedMembership.role === "member"
+      ? "Member"
+      : selectedMembership.role === "owner"
+        ? "Owner"
+        : "Admin";
+
+  const typeLabel =
+    selectedMembership.workspaceType === "company" ? "Company" : "Individual";
+
+  return (
+    <>
+      <h1>{selectedMembership.workspaceName}</h1>
+      <p>{roleLabel}</p>
+      <p>{typeLabel}</p>
+      <WorkspaceSwitcher />
+    </>
+  );
+}
 
 const membershipA: ActiveWorkspaceMembership = {
   workspaceId: "ws-a",
@@ -57,7 +61,7 @@ function renderWithWorkspace(
 ) {
   return render(
     <WorkspaceProvider memberships={memberships} refreshMemberships={refreshMemberships}>
-      <WorkspaceHome />
+      <WorkspaceSelectionProbe />
     </WorkspaceProvider>,
   );
 }

@@ -1,6 +1,10 @@
 import Dexie, { type Table } from "dexie";
 import type { Contact, Obligation, Payment } from "@/types";
 import {
+  buildScopedLedgerDatabaseName,
+  LEGACY_LEDGER_DATABASE_NAME,
+} from "@/lib/ledgerScope";
+import {
   computePaymentOutcome,
   validateObligationAmount,
   validatePaymentAgainstObligation,
@@ -11,13 +15,16 @@ import {
   validateAndNormalizeGhanaPhone,
 } from "@/utils/ghanaPhone";
 
+/** Legacy unscoped database name — preserved; authenticated routes use scoped databases only. */
+export { LEGACY_LEDGER_DATABASE_NAME };
+
 export class MepaDatabase extends Dexie {
   contacts!: Table<Contact, string>;
   obligations!: Table<Obligation, string>;
   payments!: Table<Payment, string>;
 
-  constructor() {
-    super("MepaLedger");
+  constructor(databaseName: string) {
+    super(databaseName);
     this.version(1).stores({
       contacts: "id, name, phone, type, createdAt",
       obligations: "id, contactId, direction, status, date, dueDate, createdAt",
@@ -26,9 +33,48 @@ export class MepaDatabase extends Dexie {
   }
 }
 
-export const db = new MepaDatabase();
+const scopedInstances = new Map<string, MepaDatabase>();
+
+export function getScopedLedgerDatabase(
+  userId: string,
+  workspaceId: string,
+): MepaDatabase {
+  const databaseName = buildScopedLedgerDatabaseName(userId, workspaceId);
+  const existing = scopedInstances.get(databaseName);
+
+  if (existing && !existing.isOpen()) {
+    scopedInstances.delete(databaseName);
+  }
+
+  let instance = scopedInstances.get(databaseName);
+  if (!instance) {
+    instance = new MepaDatabase(databaseName);
+    scopedInstances.set(databaseName, instance);
+  }
+
+  return instance;
+}
+
+export async function releaseScopedLedgerDatabase(
+  userId: string,
+  workspaceId: string,
+): Promise<void> {
+  const databaseName = buildScopedLedgerDatabaseName(userId, workspaceId);
+  const instance = scopedInstances.get(databaseName);
+
+  if (!instance) {
+    return;
+  }
+
+  if (instance.isOpen()) {
+    await instance.close();
+  }
+
+  scopedInstances.delete(databaseName);
+}
 
 export async function addContact(
+  db: MepaDatabase,
   data: Omit<Contact, "id" | "createdAt">,
 ): Promise<Contact> {
   let phone: string;
@@ -52,6 +98,7 @@ export async function addContact(
 }
 
 export async function addObligation(
+  db: MepaDatabase,
   data: Omit<Obligation, "id" | "createdAt" | "status" | "remainingAmount">,
 ): Promise<Obligation> {
   validateObligationAmount(data.amount);
@@ -68,6 +115,7 @@ export async function addObligation(
 }
 
 export async function recordPayment(
+  db: MepaDatabase,
   data: Omit<Payment, "id" | "createdAt">,
 ): Promise<Payment> {
   return db.transaction("rw", db.obligations, db.payments, async () => {
@@ -96,12 +144,14 @@ export async function recordPayment(
 }
 
 export async function getPaymentsForObligation(
+  db: MepaDatabase,
   obligationId: string,
 ): Promise<Payment[]> {
   return db.payments.where("obligationId").equals(obligationId).toArray();
 }
 
 export async function getObligationsForContact(
+  db: MepaDatabase,
   contactId: string,
 ): Promise<Obligation[]> {
   return db.obligations.where("contactId").equals(contactId).toArray();
@@ -112,12 +162,8 @@ export interface ContactDeletionSummary {
   paymentCount: number;
 }
 
-/**
- * Deletion policy: cascade-delete all obligations and payments for the contact
- * inside a single IndexedDB transaction. If the transaction fails, no records
- * are removed.
- */
 export async function getContactDeletionSummary(
+  db: MepaDatabase,
   contactId: string,
 ): Promise<ContactDeletionSummary> {
   const obligations = await db.obligations
@@ -140,7 +186,10 @@ export async function getContactDeletionSummary(
   };
 }
 
-export async function deleteContact(contactId: string): Promise<void> {
+export async function deleteContact(
+  db: MepaDatabase,
+  contactId: string,
+): Promise<void> {
   await db.transaction("rw", db.contacts, db.obligations, db.payments, async () => {
     const contact = await db.contacts.get(contactId);
     if (!contact) {

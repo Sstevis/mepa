@@ -12,6 +12,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DeleteContactDialog } from "@/components/DeleteContactDialog";
 
+vi.mock("@/contexts/LedgerContext", () => ({
+  useLedger: () => ({
+    db: {},
+    scopeKey: "test:test",
+    databaseName: "test-db",
+  }),
+}));
+
 vi.mock("@/db", () => ({
   getContactDeletionSummary: vi.fn().mockResolvedValue({
     obligationCount: 2,

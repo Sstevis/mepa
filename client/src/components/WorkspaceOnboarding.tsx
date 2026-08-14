@@ -128,8 +128,8 @@ export default function WorkspaceOnboarding({
             </div>
 
             <p className="text-sm text-muted-foreground">
-              You will be the Owner of this workspace. Company members and
-              invitations will be added in a later stage.
+              You will be the Owner of this workspace. Team invitations are
+              deferred.
             </p>
 
             {initialLoadError && (

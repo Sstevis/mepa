@@ -7,7 +7,8 @@ import { DeleteContactDialog } from "@/components/DeleteContactDialog";
 import Layout from "@/components/Layout";
 import ObligationCard from "@/components/ObligationCard";
 import { Button } from "@/components/ui/button";
-import { db, deleteContact, getPaymentsForObligation } from "@/db";
+import { deleteContact, getPaymentsForObligation } from "@/db";
+import { useLedger } from "@/contexts/LedgerContext";
 import { useContact } from "@/hooks/useDbData";
 import { calculateContactBalance } from "@/utils/calculateBalances";
 import { formatCurrency } from "@/utils/formatCurrency";
@@ -46,6 +47,7 @@ function PaymentHistory({ payments }: { payments: Payment[] }) {
 }
 
 export default function ContactDetail() {
+  const { db } = useLedger();
   const [, params] = useRoute("/contacts/:id");
   const contactId = params?.id;
   const { contact, loading } = useContact(contactId);
@@ -69,7 +71,7 @@ export default function ContactDetail() {
       .equals(contactId)
       .toArray()
       .then(setObligations);
-  }, [contactId]);
+  }, [contactId, db]);
 
   useEffect(() => {
     if (obligations.length === 0) {
@@ -80,14 +82,14 @@ export default function ContactDetail() {
     void Promise.all(
       obligations.map(async (obligation) => ({
         id: obligation.id,
-        payments: await getPaymentsForObligation(obligation.id),
+        payments: await getPaymentsForObligation(db, obligation.id),
       })),
     ).then((results) => {
       setPaymentsByObligation(
         Object.fromEntries(results.map((r) => [r.id, r.payments])),
       );
     });
-  }, [obligations]);
+  }, [db, obligations]);
 
   if (loading) {
     return (
@@ -110,7 +112,7 @@ export default function ContactDetail() {
   async function handleShare(obligation: Obligation) {
     if (!contact) return;
 
-    const payments = await getPaymentsForObligation(obligation.id);
+    const payments = await getPaymentsForObligation(db, obligation.id);
     const payload: ReceiptPayload = {
       obligation,
       payments,
@@ -141,7 +143,7 @@ export default function ContactDetail() {
     setDeleteError("");
 
     try {
-      await deleteContact(contactId);
+      await deleteContact(db, contactId);
       setDeleteDialogOpen(false);
       navigate(
         `/contacts?deleted=${encodeURIComponent(contact.name)}`,

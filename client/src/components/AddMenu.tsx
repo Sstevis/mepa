@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { UserPlus, FileText } from "lucide-react";
+import { UserPlus, FileText, Wallet } from "lucide-react";
 
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,16 @@ export default function AddMenu() {
             className="min-h-[56px] w-full justify-start text-base"
           >
             <FileText className="mr-3 h-5 w-5" />
-            Create Obligation
+            Add Obligation
+          </Button>
+        </Link>
+        <Link href="/payments/new">
+          <Button
+            variant="outline"
+            className="min-h-[56px] w-full justify-start text-base"
+          >
+            <Wallet className="mr-3 h-5 w-5" />
+            Make Payment
           </Button>
         </Link>
       </div>

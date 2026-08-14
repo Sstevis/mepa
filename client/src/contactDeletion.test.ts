@@ -1,30 +1,39 @@
 import "fake-indexeddb/auto";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import Dexie from "dexie";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   addContact,
   addObligation,
-  db,
   deleteContact,
   getContactDeletionSummary,
+  MepaDatabase,
   recordPayment,
 } from "@/db";
 
 describe("contact deletion", () => {
+  let db: MepaDatabase;
+  let databaseName: string;
+
   beforeEach(async () => {
-    await db.payments.clear();
-    await db.obligations.clear();
-    await db.contacts.clear();
+    databaseName = `test-db-${crypto.randomUUID()}`;
+    db = new MepaDatabase(databaseName);
+    await db.open();
+  });
+
+  afterEach(async () => {
+    await db.close();
+    await Dexie.delete(databaseName);
   });
 
   it("deletes a contact with no related records", async () => {
-    const contact = await addContact({
+    const contact = await addContact(db, {
       name: "Empty Contact",
       phone: "0244000000",
       type: "customer",
     });
 
-    await deleteContact(contact.id);
+    await deleteContact(db, contact.id);
 
     expect(await db.contacts.get(contact.id)).toBeUndefined();
     expect(await db.obligations.count()).toBe(0);
@@ -32,13 +41,13 @@ describe("contact deletion", () => {
   });
 
   it("cascade-deletes related obligations and payments after confirmation flow", async () => {
-    const contact = await addContact({
+    const contact = await addContact(db, {
       name: "Kwame",
       phone: "0244111222",
       type: "supplier",
     });
 
-    const obligation = await addObligation({
+    const obligation = await addObligation(db, {
       contactId: contact.id,
       direction: "i_owe_them",
       amount: 1200,
@@ -47,7 +56,7 @@ describe("contact deletion", () => {
       dueDate: "2026-08-24",
     });
 
-    await recordPayment({
+    await recordPayment(db, {
       obligationId: obligation.id,
       amount: 500,
       method: "momo",
@@ -56,11 +65,11 @@ describe("contact deletion", () => {
       note: "",
     });
 
-    const summary = await getContactDeletionSummary(contact.id);
+    const summary = await getContactDeletionSummary(db, contact.id);
     expect(summary.obligationCount).toBe(1);
     expect(summary.paymentCount).toBe(1);
 
-    await deleteContact(contact.id);
+    await deleteContact(db, contact.id);
 
     expect(await db.contacts.get(contact.id)).toBeUndefined();
     expect(await db.obligations.count()).toBe(0);
@@ -68,13 +77,13 @@ describe("contact deletion", () => {
   });
 
   it("leaves all records unchanged when deletion fails", async () => {
-    const contact = await addContact({
+    const contact = await addContact(db, {
       name: "Protected",
       phone: "0244333444",
       type: "customer",
     });
 
-    const obligation = await addObligation({
+    const obligation = await addObligation(db, {
       contactId: contact.id,
       direction: "they_owe_me",
       amount: 800,
@@ -87,7 +96,7 @@ describe("contact deletion", () => {
       .spyOn(db.contacts, "delete")
       .mockRejectedValueOnce(new Error("IndexedDB write failed"));
 
-    await expect(deleteContact(contact.id)).rejects.toThrow(
+    await expect(deleteContact(db, contact.id)).rejects.toThrow(
       "IndexedDB write failed",
     );
 
@@ -98,18 +107,18 @@ describe("contact deletion", () => {
   });
 
   it("does not affect other contacts or their records", async () => {
-    const target = await addContact({
+    const target = await addContact(db, {
       name: "Target",
       phone: "0244000001",
       type: "supplier",
     });
-    const other = await addContact({
+    const other = await addContact(db, {
       name: "Other",
       phone: "0244000002",
       type: "customer",
     });
 
-    const targetObligation = await addObligation({
+    const targetObligation = await addObligation(db, {
       contactId: target.id,
       direction: "i_owe_them",
       amount: 1000,
@@ -118,7 +127,7 @@ describe("contact deletion", () => {
       dueDate: "2026-08-20",
     });
 
-    const otherObligation = await addObligation({
+    const otherObligation = await addObligation(db, {
       contactId: other.id,
       direction: "they_owe_me",
       amount: 500,
@@ -127,7 +136,7 @@ describe("contact deletion", () => {
       dueDate: "2026-08-20",
     });
 
-    await deleteContact(target.id);
+    await deleteContact(db, target.id);
 
     expect(await db.contacts.get(target.id)).toBeUndefined();
     expect(await db.obligations.get(targetObligation.id)).toBeUndefined();
@@ -140,7 +149,7 @@ describe("contact deletion", () => {
     const obligationsBefore = await db.obligations.count();
     const paymentsBefore = await db.payments.count();
 
-    await expect(deleteContact("missing-contact-id")).rejects.toThrow(
+    await expect(deleteContact(db, "missing-contact-id")).rejects.toThrow(
       "Cannot delete contact: contact not found.",
     );
 

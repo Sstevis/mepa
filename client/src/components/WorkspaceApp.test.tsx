@@ -17,19 +17,20 @@ vi.mock("@/contexts/AuthContext", () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock("@/hooks/useWorkspaceInvitations", () => ({
-  useWorkspaceInvitations: vi.fn(() => ({
-    invitations: [],
-    loading: false,
-    creating: false,
-    revokingInvitationId: null,
-    error: null,
-    successMessage: null,
-    refresh: vi.fn(),
-    createInvitation: vi.fn(),
-    revokeInvitation: vi.fn(),
-    clearMessages: vi.fn(),
-  })),
+vi.mock("@/contexts/LedgerContext", () => ({
+  LedgerProvider: ({ children }: { children: React.ReactNode }) => children,
+  useLedger: () => ({
+    db: {},
+    scopeKey: "user-1:ws-1",
+    databaseName: "MepaLedger__user_user-1__workspace_ws-1",
+  }),
+}));
+
+vi.mock("@/hooks/useDbData", () => ({
+  useContacts: vi.fn(() => ({ contacts: [], loading: false, refresh: vi.fn() })),
+  useObligations: vi.fn(() => ({ obligations: [], loading: false, refresh: vi.fn() })),
+  usePayments: vi.fn(() => ({ payments: [], loading: false, refresh: vi.fn() })),
+  useContact: vi.fn(() => ({ contact: null, loading: false })),
 }));
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,8 +54,8 @@ afterEach(() => {
 describe("WorkspaceApp", () => {
   beforeEach(() => {
     vi.mocked(useAuth).mockReturnValue({
-      session: { user: { email: "trader@example.com" } } as never,
-      user: { email: "trader@example.com" } as never,
+      session: { user: { id: "user-1", email: "trader@example.com" } } as never,
+      user: { id: "user-1", email: "trader@example.com" } as never,
       loading: false,
       signIn: vi.fn(),
       signUp: vi.fn(),
@@ -80,7 +81,7 @@ describe("WorkspaceApp", () => {
     expect(screen.queryByText("Kwame Provisions")).toBeNull();
   });
 
-  it("shows the workspace summary after RLS-protected membership load", () => {
+  it("renders the core ledger dashboard after membership load", () => {
     vi.mocked(useWorkspaceMemberships).mockReturnValue({
       memberships: [sampleMembership],
       loading: false,
@@ -92,10 +93,9 @@ describe("WorkspaceApp", () => {
 
     render(<WorkspaceApp />);
 
-    expect(screen.getByRole("heading", { name: "Kwame Provisions" })).toBeTruthy();
-    expect(screen.getByText("Individual")).toBeTruthy();
-    expect(screen.getByText("Owner")).toBeTruthy();
-    expect(screen.queryByText("Contacts")).toBeNull();
-    expect(screen.queryByText("Kwame Mensah")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Dashboard" })).toBeTruthy();
+    expect(screen.getAllByText("Kwame Provisions").length).toBeGreaterThan(0);
+    expect(screen.getByText("Team invitations are deferred.")).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Team invitations" })).toBeNull();
   });
 });

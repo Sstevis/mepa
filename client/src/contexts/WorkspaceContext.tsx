@@ -122,3 +122,7 @@ export function useWorkspace(): WorkspaceContextValue {
 
   return context;
 }
+
+export function useWorkspaceOptional(): WorkspaceContextValue | null {
+  return useContext(WorkspaceContext);
+}

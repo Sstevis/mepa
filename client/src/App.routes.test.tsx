@@ -17,10 +17,26 @@ vi.mock("@/hooks/useWorkspaceMemberships", () => ({
   useWorkspaceMemberships: vi.fn(),
 }));
 
+vi.mock("@/contexts/LedgerContext", () => ({
+  LedgerProvider: ({ children }: { children: React.ReactNode }) => children,
+  useLedger: () => ({
+    db: {},
+    scopeKey: "user-1:ws-1",
+    databaseName: "MepaLedger__user_user-1__workspace_ws-1",
+  }),
+}));
+
+vi.mock("@/hooks/useDbData", () => ({
+  useContacts: vi.fn(() => ({ contacts: [], loading: false, refresh: vi.fn() })),
+  useObligations: vi.fn(() => ({ obligations: [], loading: false, refresh: vi.fn() })),
+  usePayments: vi.fn(() => ({ payments: [], loading: false, refresh: vi.fn() })),
+  useContact: vi.fn(() => ({ contact: null, loading: false })),
+}));
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspaceMemberships } from "@/hooks/useWorkspaceMemberships";
 
-const sampleUser = { email: "trader@example.com" } as User;
+const sampleUser = { id: "user-1", email: "trader@example.com" } as User;
 const sampleSession = { user: sampleUser } as Session;
 
 function renderAppAt(path: string) {
@@ -50,6 +66,27 @@ function mockAuthState(
 function mockNoWorkspace() {
   vi.mocked(useWorkspaceMemberships).mockReturnValue({
     memberships: [],
+    loading: false,
+    creating: false,
+    error: null,
+    refresh: vi.fn(),
+    createWorkspace: vi.fn(),
+  });
+}
+
+const sampleMembership = {
+  workspaceId: "ws-1",
+  workspaceName: "Kwame Provisions",
+  workspaceType: "individual" as const,
+  role: "owner" as const,
+  currencyCode: "GHS",
+  timezone: "Africa/Accra",
+  status: "active" as const,
+};
+
+function mockActiveWorkspace() {
+  vi.mocked(useWorkspaceMemberships).mockReturnValue({
+    memberships: [sampleMembership],
     loading: false,
     creating: false,
     error: null,
@@ -115,6 +152,19 @@ describe("App route protection", () => {
     expect(screen.queryByText("Contacts")).toBeNull();
     expect(screen.queryByText("Kwame Mensah")).toBeNull();
     expect(screen.queryByText("Dashboard")).toBeNull();
+  });
+
+  it("renders the core ledger for authenticated users with an active workspace", () => {
+    mockAuthState({
+      session: sampleSession,
+      user: sampleUser,
+    });
+    mockActiveWorkspace();
+
+    renderAppAt("/");
+
+    expect(screen.getByRole("heading", { name: "Dashboard" })).toBeTruthy();
+    expect(screen.getByText("Team invitations are deferred.")).toBeTruthy();
   });
 
   it("keeps shared receipt verification public without auth", () => {

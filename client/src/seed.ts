@@ -1,9 +1,14 @@
-import { db } from "@/db";
+import { LEGACY_LEDGER_DATABASE_NAME, MepaDatabase } from "@/db";
 import type { Contact, Obligation, Payment } from "@/types";
 
 const SEED_CREATED = Date.now();
 
+/**
+ * Legacy-only demo seed for the unscoped `MepaLedger` database.
+ * Authenticated routes use scoped databases and must not call this.
+ */
 export async function seedDatabase(): Promise<void> {
+  const db = new MepaDatabase(LEGACY_LEDGER_DATABASE_NAME);
   const count = await db.contacts.count();
   if (count > 0) return;
 

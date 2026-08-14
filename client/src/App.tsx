@@ -26,6 +26,7 @@ export default function App() {
       <Route path="/contacts/:id" component={ProtectedWorkspaceBoundary} />
       <Route path="/add" component={ProtectedWorkspaceBoundary} />
       <Route path="/obligations/new" component={ProtectedWorkspaceBoundary} />
+      <Route path="/payments/new" component={ProtectedWorkspaceBoundary} />
       <Route path="/obligations/:id/pay" component={ProtectedWorkspaceBoundary} />
       <Route path="/export" component={ProtectedWorkspaceBoundary} />
     </Switch>

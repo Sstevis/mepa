@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { getContactDeletionSummary } from "@/db";
+import { useLedger } from "@/contexts/LedgerContext";
 
 export interface DeleteContactDialogProps {
   open: boolean;
@@ -22,6 +23,7 @@ export function DeleteContactDialog({
   onCancel,
   onConfirm,
 }: DeleteContactDialogProps) {
+  const { db } = useLedger();
   const [summary, setSummary] = useState({
     obligationCount: 0,
     paymentCount: 0,
@@ -29,8 +31,8 @@ export function DeleteContactDialog({
 
   useEffect(() => {
     if (!open) return;
-    void getContactDeletionSummary(contactId).then(setSummary);
-  }, [open, contactId]);
+    void getContactDeletionSummary(db, contactId).then(setSummary);
+  }, [open, contactId, db]);
 
   return (
     <ConfirmDialog
