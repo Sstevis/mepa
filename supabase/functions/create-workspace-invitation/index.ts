@@ -6,8 +6,8 @@ import {
   buildPendingSuccessResponse,
   extractInvitationIdFromRpcResult,
   getAllowedOrigins,
+  bodyInvalidResponse,
   internalErrorResponse,
-  invalidRequest,
   mapRpcErrorToSafeResponse,
   parseBearerAuthorization,
   readServiceRoleKeyFromEnv,
@@ -50,7 +50,7 @@ Deno.serve(async (request) => {
   }
 
   if (request.method !== "POST") {
-    return errorResponse(invalidRequest(), 405, corsHeaders);
+    return errorResponse(bodyInvalidResponse(), 405, corsHeaders);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -84,7 +84,7 @@ Deno.serve(async (request) => {
   try {
     body = await request.json();
   } catch {
-    return errorResponse(invalidRequest(), 400, corsHeaders);
+    return errorResponse(bodyInvalidResponse(), 400, corsHeaders);
   }
 
   const validated = validateCreateInvitationBody(body);
